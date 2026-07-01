@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【緊急】日程調整のお願い</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #333333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            text-align: center;
+            border: 2px solid #e1e8ed;
+        }
+
+        h2 {
+            font-size: 20px;
+            color: #1a365d;
+            margin-bottom: 10px;
+        }
+
+        .desc {
+            font-size: 14px;
+            color: #627d98;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        /* 💡 7月カレンダーのスタイル */
+        .calendar-title {
+            font-weight: bold;
+            color: #2b6cb0;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid #edf2f7;
+            margin-bottom: 20px;
+        }
+
+        .weekday {
+            font-size: 11px;
+            font-weight: bold;
+            color: #a0aec0;
+            padding-bottom: 5px;
+        }
+        .weekday.sun { color: #e53e3e; }
+        .weekday.sat { color: #3182ce; }
+
+        .day {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 0;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #4a5568;
+        }
+        .day:hover {
+            background: #ebf8ff;
+            border-color: #bee3f8;
+        }
+        /* 💡 選択された日のスタイル */
+        .day.selected {
+            background: #3182ce !important;
+            color: #ffffff !important;
+            border-color: #2b6cb0 !important;
+            transform: scale(1.05);
+        }
+        /* 空白マスのスタイル */
+        .day.empty {
+            background: transparent;
+            border: none;
+            cursor: default;
+        }
+
+        /* 💡 時間帯選択 */
+        .time-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .time-btn {
+            background: #edf2f7;
+            border: 2px solid transparent;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .time-btn.selected {
+            background: #feebc8;
+            color: #dd6b20;
+            border-color: #fbd38d;
+        }
+
+        /* 💡 コピー＆LINE送信エリア */
+        .result-box {
+            background: #f7fafc;
+            border: 1px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 14px;
+            text-align: left;
+            white-space: pre-wrap;
+            margin-bottom: 15px;
+            color: #2d3748;
+            display: none; /* 最初は隠しておく */
+        }
+
+        .action-btn {
+            width: 100%;
+            background: #2cbd5d; /* LINEカラー */
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(44, 189, 93, 0.3);
+            display: none;
+        }
+        .action-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>📅 後輩からの一方的日程調整</h2>
+        <p class="desc">先輩、お疲れ様です！お忙しい先輩のために、1秒で終わる日程調整ツールを作りました。都合の良い日と時間をタップしてください</p>
+
+        <div class="calendar-title">2026年 7月</div>
+        <div class="calendar" id="calendar">
+            <div class="weekday sun">日</div><div class="weekday">月</div><div class="weekday">火</div><div class="weekday">水</div><div class="weekday">木</div><div class="weekday">金</div><div class="weekday sat">土</div>
+            </div>
+
+        <div class="calendar-title">希望の時間帯</div>
+        <div class="time-group">
+            <button class="time-btn" onclick="selectTime('昼から（先輩の奢りランチ）')">☀️ 昼から</button>
+            <button class="time-btn" onclick="selectTime('夕方から（先輩の奢り飲み）')">🍺 夕方から</button>
+            <button class="time-btn" onclick="selectTime('深夜2時（ウーバー奢り待ち）')">🌙 マクド一部おごり</button>
+            <button class="time-btn" onclick="selectTime('いつでも可（這ってでも行きます）')">🏃‍♂️ いつでも可（這ってでも行きます）</button>
+        </div>
+
+        <div class="result-box" id="result-box"></div>
+
+        <button class="action-btn" id="line-btn" onclick="sendToLine()">📋 回答をコピーしてLINEを開く</button>
+    </div>
+
+    <script>
+        let selectedDay = null;
+        let selectedTime = null;
+
+        // 💡 2026年7月のカレンダー生成（1日は水曜日）
+        const calendarEl = document.getElementById('calendar');
+        const startEmptyCells = 3; // 水曜日スタートなので日・月・火の3マス空ける
+        const totalDays = 31;
+
+        // 空白マスを埋める
+        for (let i = 0; i < startEmptyCells; i++) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'day empty';
+            calendarEl.appendChild(emptyDiv);
+        }
+
+        // 日付マスを作る
+        for (let day = 1; day <= totalDays; day++) {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'day';
+            dayDiv.innerText = day;
+            
+            // 💡 7月7日は七夕なので勝手に固定するおふざけ
+            if (day === 7) {
+                dayDiv.innerText = "7(織姫)";
+            }
+
+            dayDiv.onclick = () => {
+                // すべての選択を解除
+                document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
+                // クリックした日を選択
+                dayDiv.classList.add('selected');
+                selectedDay = day;
+                updateOutput();
+            };
+            calendarEl.appendChild(dayDiv);
+        }
+
+        // 時間選択の処理
+        function selectTime(timeText) {
+            document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            selectedTime = timeText;
+            updateOutput();
+        }
+
+        // 💡 LINE送信用のテキストを生成・表示
+        function updateOutput() {
+            if (!selectedDay || !selectedTime) return;
+
+            const resultBox = document.getElementById('result-box');
+            const lineBtn = document.getElementById('line-btn');
+
+            const text = `【日程回答】\n先輩！お疲れ様です！\n日程調整ツールの回答です、ご確認ください！\n\n■候補日：7月 ${selectedDay} 日\n■時間帯：${selectedTime}\n\n※このメッセージは後輩の端末から自動送信されています。予定が確定しましたので、楽しみにしています🥰`;
+
+            resultBox.innerText = text;
+            resultBox.style.display = 'block';
+            lineBtn.style.display = 'block';
+        }
+
+        // 💡 クリップボードにコピーしてLINEを起動する
+        function sendToLine() {
+            const resultBox = document.getElementById('result-box');
+            const text = resultBox.innerText;
+
+            // クリップボードにコピー
+            navigator.clipboard.writeText(text).then(() => {
+                alert("回答をコピーしました！LINEが起動するので、そのまま先輩のトーク画面に貼り付けて送ってください！✈️");
+                // LINEアプリの起動を試みる（スマホならLINEアプリ、PCならWeb等）
+                window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(text);
+            }).catch(err => {
+                // 万が一のコピー失敗用
+                window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(text);
+            });
+        }
+    </script>
+</body>
+</html>
