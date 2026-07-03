@@ -42,7 +42,6 @@
             margin-bottom: 20px;
         }
 
-        /* 💡 7月カレンダーのスタイル */
         .calendar-title {
             font-weight: bold;
             color: #2b6cb0;
@@ -92,14 +91,12 @@
             border-color: #2b6cb0 !important;
             transform: scale(1.05);
         }
-        /* 空白マスのスタイル */
         .day.empty {
             background: transparent;
             border: none;
             cursor: default;
         }
 
-        /* 💡 時間帯選択 */
         .time-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -124,7 +121,6 @@
             border-color: #fbd38d;
         }
 
-        /* 💡 コピー＆LINE送信エリア */
         .result-box {
             background: #f7fafc;
             border: 1px dashed #cbd5e0;
@@ -135,12 +131,12 @@
             white-space: pre-wrap;
             margin-bottom: 15px;
             color: #2d3748;
-            display: none; /* 最初は隠しておく */
+            display: none;
         }
 
         .action-btn {
             width: 100%;
-            background: #2cbd5d; /* LINEカラー */
+            background: #2cbd5d;
             color: white;
             border: none;
             padding: 16px;
@@ -160,65 +156,67 @@
 
     <div class="container">
         <h2>📅 後輩からの一方的日程調整</h2>
-        <p class="desc">先輩、お疲れ様です！お忙しい先輩のために、1秒で終わる日程調整ツールを作りました。都合の良い日と時間をタップしてください</p>
+        <p class="desc">先輩、お疲れ様です！候補日（**複数選択OK！**）と時間帯をタップしてください。断るボタンはバグで消去しました🥰</p>
 
-        <div class="calendar-title">2026年 7月</div>
+        <div class="calendar-title">2026年 7月（複数選択可）</div>
         <div class="calendar" id="calendar">
             <div class="weekday sun">日</div><div class="weekday">月</div><div class="weekday">火</div><div class="weekday">水</div><div class="weekday">木</div><div class="weekday">金</div><div class="weekday sat">土</div>
-            </div>
+        </div>
 
         <div class="calendar-title">希望の時間帯</div>
         <div class="time-group">
-            <button class="time-btn" onclick="selectTime('昼から（先輩の奢りランチ）')">☀️ 昼から</button>
-            <button class="time-btn" onclick="selectTime('夕方から（先輩の奢り飲み）')">🍺 夕方から</button>
-            <button class="time-btn" onclick="selectTime('深夜2時（ウーバー奢り待ち）')">🌙 マクド一部おごり</button>
+            <button class="time-btn" onclick="selectTime('昼から（先輩の奢りランチ）')">☀️ 昼から（先輩の奢りランチ）</button>
+            <button class="time-btn" onclick="selectTime('夕方から（先輩の奢り飲み）')">🍺 夕方から（先輩の奢り飲み）</button>
+            <button class="time-btn" onclick="selectTime('深夜2時（ウーバー奢り待ち）')">🌙 深夜2時（ウーバー奢り待ち）</button>
             <button class="time-btn" onclick="selectTime('いつでも可（這ってでも行きます）')">🏃‍♂️ いつでも可（這ってでも行きます）</button>
         </div>
 
         <div class="result-box" id="result-box"></div>
-
         <button class="action-btn" id="line-btn" onclick="sendToLine()">📋 回答をコピーしてLINEを開く</button>
     </div>
 
     <script>
-        let selectedDay = null;
+        // 💡 選択された日付を記録する配列（リスト）
+        let selectedDays = [];
         let selectedTime = null;
 
-        // 💡 2026年7月のカレンダー生成（1日は水曜日）
         const calendarEl = document.getElementById('calendar');
-        const startEmptyCells = 3; // 水曜日スタートなので日・月・火の3マス空ける
+        const startEmptyCells = 3; // 2026年7月は水曜スタート
         const totalDays = 31;
 
-        // 空白マスを埋める
         for (let i = 0; i < startEmptyCells; i++) {
             const emptyDiv = document.createElement('div');
             emptyDiv.className = 'day empty';
             calendarEl.appendChild(emptyDiv);
         }
 
-        // 日付マスを作る
         for (let day = 1; day <= totalDays; day++) {
             const dayDiv = document.createElement('div');
             dayDiv.className = 'day';
             dayDiv.innerText = day;
             
-            // 💡 7月7日は七夕なので勝手に固定するおふざけ
             if (day === 7) {
                 dayDiv.innerText = "7(織姫)";
             }
 
+            // 💡 複数選択のためのクリック処理
             dayDiv.onclick = () => {
-                // すべての選択を解除
-                document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
-                // クリックした日を選択
-                dayDiv.classList.add('selected');
-                selectedDay = day;
+                if (dayDiv.classList.contains('selected')) {
+                    // すでに選ばれていたら解除する
+                    dayDiv.classList.remove('selected');
+                    selectedDays = selectedDays.filter(d => d !== day);
+                } else {
+                    // 選ばれていなければ追加する
+                    dayDiv.classList.add('selected');
+                    selectedDays.push(day);
+                }
+                // 日付順に綺麗に並び替える
+                selectedDays.sort((a, b) => a - b);
                 updateOutput();
             };
             calendarEl.appendChild(dayDiv);
         }
 
-        // 時間選択の処理
         function selectTime(timeText) {
             document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('selected'));
             event.target.classList.add('selected');
@@ -226,32 +224,35 @@
             updateOutput();
         }
 
-        // 💡 LINE送信用のテキストを生成・表示
         function updateOutput() {
-            if (!selectedDay || !selectedTime) return;
+            // 日付が1つ以上選ばれていて、時間帯も選ばれていたら表示
+            if (selectedDays.length === 0 || !selectedTime) {
+                document.getElementById('result-box').style.display = 'none';
+                document.getElementById('line-btn').style.display = 'none';
+                return;
+            }
 
             const resultBox = document.getElementById('result-box');
             const lineBtn = document.getElementById('line-btn');
 
-            const text = `【日程回答】\n先輩！お疲れ様です！\n日程調整ツールの回答です、ご確認ください！\n\n■候補日：7月 ${selectedDay} 日\n■時間帯：${selectedTime}\n\n※このメッセージは後輩の端末から自動送信されています。予定が確定しましたので、楽しみにしています🥰`;
+            // 「7日, 15日, 20日」のように文字を繋げる
+            const daysText = selectedDays.map(d => `${d}日`).join(', ');
+
+            const text = `【日程回答】\n先輩！お疲れ様です！\n日程調整ツールの回答です、ご確認ください！\n\n■候補日：7月 ${daysText}\n■時間帯：${${"selectedTime"}}\n\n※このメッセージは後輩の端末から自動送信されています。この中から先輩が奢ってくれる日を選んでLINEしてください🥰`;
 
             resultBox.innerText = text;
             resultBox.style.display = 'block';
             lineBtn.style.display = 'block';
         }
 
-        // 💡 クリップボードにコピーしてLINEを起動する
         function sendToLine() {
             const resultBox = document.getElementById('result-box');
             const text = resultBox.innerText;
 
-            // クリップボードにコピー
             navigator.clipboard.writeText(text).then(() => {
-                alert("回答をコピーしました！LINEが起動するので、そのまま先輩のトーク画面に貼り付けて送ってください！✈️");
-                // LINEアプリの起動を試みる（スマホならLINEアプリ、PCならWeb等）
+                alert("候補日をコピーしました！LINEに貼り付けて先輩に送りつけてください！✈️");
                 window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(text);
             }).catch(err => {
-                // 万が一のコピー失敗用
                 window.location.href = "https://line.me/R/msg/text/?" + encodeURIComponent(text);
             });
         }
